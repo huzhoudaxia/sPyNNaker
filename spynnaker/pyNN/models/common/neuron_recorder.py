@@ -102,6 +102,31 @@ class NeuronRecorder(object):
         step = globals_variables.get_simulator().machine_time_step / 1000
         return self.__sampling_rates[variable] * step
 
+    def retreive_matrix_data(
+            self, label, region, graph_mapper,
+            application_vertex, variable, n_machine_time_steps, segment):
+        pass
+
+    def cache_matrix_data(
+            self, label, buffer_manager, region, graph_mapper,
+            application_vertex, variable, segment):
+        """ Read a uint32 mapped to time and neuron IDs from the SpiNNaker\
+            machine.
+
+        :param label: vertex label
+        :param buffer_manager: the manager for buffered data
+        :param region: the DSG region ID used for this data
+        :param placements: the placements object
+        :param graph_mapper: \
+            the mapping between application and machine vertices
+        :param application_vertex:
+        :param variable: PyNN name for the variable (V, gsy_inh etc.)
+        :type variable: str
+        :param n_machine_time_steps:
+        :return:
+        """
+        pass
+
     def get_matrix_data(
             self, label, buffer_manager, region, placements, graph_mapper,
             application_vertex, variable, n_machine_time_steps):

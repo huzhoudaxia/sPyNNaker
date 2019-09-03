@@ -56,6 +56,32 @@ class AbstractNeuronRecordable(object):
         """
 
     @abstractmethod
+    def cache_data(self, variable, n_machine_time_steps, placements,
+                 graph_mapper, buffer_manager, machine_time_step, segment):
+        """ Cache the recorded data
+
+        :param variable:
+        :param n_machine_time_steps:
+        :param placements:
+        :param graph_mapper:
+        :param buffer_manager:
+        :param machine_time_step:
+        :return:
+        """
+        # pylint: disable=too-many-arguments
+
+    @abstractmethod
+    def retrieve_data(self, variable, graph_mapper, segment):
+        """
+        Retrieve previously cached data
+
+        :param variable:
+        :param graph_mapper:
+        :param segment:
+        :return:
+        """
+
+    @abstractmethod
     def get_data(self, variable, n_machine_time_steps, placements,
                  graph_mapper, buffer_manager, machine_time_step):
         """ Get the recorded data

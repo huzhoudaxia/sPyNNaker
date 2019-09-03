@@ -127,13 +127,75 @@ class NeuronRecorder(object):
         """
         pass
 
+    def _get_machine_matrix_data(
+            self, buffer_manager, region, placement, n_neurons,
+            vertex, variable, sampling_rate, expected_rows):
+        """ Read a uint32 mapped to time and neuron IDs from the SpiNNaker\
+            machine.
+
+        :param buffer_manager: the manager for buffered data
+        :param region: the DSG region ID used for this data
+        :param placements: the placements object
+        :param graph_mapper: \
+            the mapping between application and machine vertices
+        :param vertex:
+        :param variable: PyNN name for the variable (V, gsy_inh etc.)
+        :type variable: str
+        :param n_machine_time_steps:
+        :return:
+        """
+        if n_neurons == 0:
+            return "TODO"
+
+        # for buffering output info is taken form the buffer manager
+        record_raw, missing_data = buffer_manager.get_data_by_placement(
+                placement, region)
+        record_length = len(record_raw)
+
+        row_length = self.N_BYTES_FOR_TIMESTAMP + \
+            n_neurons * self.N_BYTES_PER_VALUE
+
+        # There is one column for time and one for each neuron recording
+        n_rows = record_length // row_length
+        if record_length > 0:
+            # Converts bytes to ints and make a matrix
+            record = (numpy.asarray(record_raw, dtype="uint8").
+                      view(dtype="<i4")).reshape((n_rows, (n_neurons + 1)))
+        else:
+            record = numpy.empty((0, n_neurons))
+        # Check if you have the expected data
+        if not missing_data and n_rows == expected_rows:
+            # Just cut the timestamps off to get the fragment
+            fragment = (record[:, 1:] / float(DataType.S1615.scale))
+        else:
+            missing_str = "({}, {}, {}); ".format(
+                placement.x, placement.y, placement.p)
+            # Start the fragment for this slice empty
+            fragment = numpy.empty((expected_rows, n_neurons))
+            for i in xrange(0, expected_rows):
+                time = i * sampling_rate
+                # Check if there is data for this timestep
+                local_indexes = numpy.where(record[:, 0] == time)
+                if len(local_indexes[0]) == 1:
+                    fragment[i] = (record[local_indexes[0], 1:] /
+                                   float(DataType.S1615.scale))
+                elif len(local_indexes[0]) > 1:
+                    logger.warning(
+                        "Population {} on multiple recorded data for "
+                        "time {}".format(vertex.label, time))
+                else:
+                    # Set row to nan
+                    fragment[i] = numpy.full(n_neurons, numpy.nan)
+
+        return fragment
+
+
     def get_matrix_data(
-            self, label, buffer_manager, region, placements, graph_mapper,
+            self, buffer_manager, region, placements, graph_mapper,
             application_vertex, variable, n_machine_time_steps):
         """ Read a uint32 mapped to time and neuron IDs from the SpiNNaker\
             machine.
 
-        :param label: vertex label
         :param buffer_manager: the manager for buffered data
         :param region: the DSG region ID used for this data
         :param placements: the placements object
@@ -150,7 +212,8 @@ class NeuronRecorder(object):
             raise ConfigurationException(msg)
         vertices = graph_mapper.get_machine_vertices(application_vertex)
         progress = ProgressBar(
-            vertices, "Getting {} for {}".format(variable, label))
+            vertices, "Getting {} for {}".format(
+                variable, application_vertex.label))
         sampling_rate = self.__sampling_rates[variable]
         expected_rows = int(math.ceil(
             n_machine_time_steps / sampling_rate))
@@ -200,7 +263,7 @@ class NeuronRecorder(object):
                     elif len(local_indexes[0]) > 1:
                         logger.warning(
                             "Population {} on multiple recorded data for "
-                            "time {}".format(label, time))
+                            "time {}".format(application_vertex.label, time))
                     else:
                         # Set row to nan
                         fragment[i] = numpy.full(n_neurons, numpy.nan)
@@ -212,7 +275,8 @@ class NeuronRecorder(object):
         if len(missing_str) > 0:
             logger.warning(
                 "Population {} is missing recorded data in region {} from the"
-                " following cores: {}".format(label, region, missing_str))
+                " following cores: {}".format(
+                    application_vertex.label, region, missing_str))
         sampling_interval = self.get_neuron_sampling_interval(variable)
         return (data, indexes, sampling_interval)
 

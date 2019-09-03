@@ -617,7 +617,7 @@ class AbstractPopulationVertex(
             index = 1 + self.__neuron_impl.get_recordable_variable_index(
                 variable)
         return self.__neuron_recorder.get_matrix_data(
-            self.label, buffer_manager, index, placements, graph_mapper,
+            buffer_manager, index, placements, graph_mapper,
             self, variable, n_machine_time_steps)
 
     @overrides(AbstractNeuronRecordable.get_neuron_sampling_interval)

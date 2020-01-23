@@ -323,8 +323,8 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
 
 
     recorded_variable_values[GSYN_EXCITATORY_RECORDING_INDEX] =
-    		neuron->syn_state[0].delta_w;
-//    		neuron->syn_state[0].z_bar;
+//    		neuron->syn_state[0].delta_w;
+    		neuron->syn_state[0].z_bar;
 //    		total_exc;
 //    		z_t;
 //    		global_parameters->core_pop_rate;

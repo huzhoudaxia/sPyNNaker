@@ -243,7 +243,7 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
 
     // Get the voltage
     state_t voltage = neuron_model_get_membrane_voltage(neuron);
-    state_t B_t = neuron->B; // cache last timestep threshold level
+    state_t B_t = neuron->B;
     state_t z_t = neuron->z;
 
 //    recorded_variable_values[V_RECORDING_INDEX] = voltage;
@@ -275,6 +275,9 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
 //    		global_parameters->core_pop_rate;
 
     // Call functions to convert exc_input and inh_input to current
+    // QUESTION these inputs are membrane voltage from i neuron ?
+    // just need 1 for incoming spike else 0 multiplied by weight for that synapse
+    // need new input_type ?
     input_type_convert_excitatory_input_to_current(
             exc_input_values, input_type, voltage);
     input_type_convert_inhibitory_input_to_current(
@@ -288,6 +291,7 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
 
 
     // Record B
+    // location before/after state update will determine tick that is recorded
     recorded_variable_values[GSYN_INHIBITORY_RECORDING_INDEX] =
 //    		B_t; // neuron->B;
 //    		global_parameters->core_target_rate;

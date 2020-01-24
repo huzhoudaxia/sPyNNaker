@@ -28,10 +28,22 @@ static inline void lif_neuron_closed_form(
 		REAL B_t) {
 
     REAL alpha = input_this_timestep * neuron->R_membrane + neuron->V_rest;
+    // input_this_timestep is a current
+    // however in Bellec et al it is a binary times weight
 
     // update membrane voltage
     neuron->V_membrane = alpha - (neuron->exp_TC * (alpha - V_prev))
     		- neuron->z * B_t; // this line achieves reset
+} // neuron, neuron->V_membrane, input_this_timestep, B_t
+
+static inline void lif_model_voltage_update(
+        neuron_pointer_t neuron, REAL V_prev, input_t input_this_timestep,
+        REAL B_t) {
+
+    REAL alpha_decay = 0.9512294245 // exp(1/20ms)
+    // input_this_timestep = exc_input[0] - inh_input[0] + external_bias + neuron->I_offset
+    neuron->V_membrane = alpha_decay * V_prev + input_this_timestep
+
 }
 
 void neuron_model_set_global_neuron_params(
@@ -62,6 +74,8 @@ state_t neuron_model_state_update(
 		total_inh += inh_input[i];
 	}
     // Get the input in nA
+    // exc_input[0] + exc_input[1] + ... QUESTION
+    // care with timesteps. exc_input[1] (recurrent) at t and exc_input[0] (input x) at t+1
     input_t input_this_timestep =
     		exc_input[0] - inh_input[0] + external_bias + neuron->I_offset;
 

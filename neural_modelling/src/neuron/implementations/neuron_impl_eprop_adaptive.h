@@ -243,7 +243,7 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
 
     // Get the voltage
     state_t voltage = neuron_model_get_membrane_voltage(neuron);
-    state_t B_t = neuron->B;
+    state_t B_t = neuron->B; // cache last timestep threshold level
     state_t z_t = neuron->z;
 
 //    recorded_variable_values[V_RECORDING_INDEX] = voltage;
@@ -258,16 +258,16 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
     input_t* inh_input_values = input_type_get_input_value(
             inh_value, input_type, NUM_INHIBITORY_RECEPTORS);
 
-    // Sum g_syn contributions from all receptors for recording
-    REAL total_exc = 0;
-    REAL total_inh = 0;
-
-    for (int i = 0; i < NUM_EXCITATORY_RECEPTORS; i++) {
-        total_exc += exc_input_values[i];
-    }
-    for (int i = 0; i < NUM_INHIBITORY_RECEPTORS; i++) {
-        total_inh += inh_input_values[i];
-    }
+//    // Sum g_syn contributions from all receptors for recording
+//    REAL total_exc = 0;
+//    REAL total_inh = 0;
+//
+//    for (int i = 0; i < NUM_EXCITATORY_RECEPTORS; i++) {
+//        total_exc += exc_input_values[i];
+//    }
+//    for (int i = 0; i < NUM_INHIBITORY_RECEPTORS; i++) {
+//        total_inh += inh_input_values[i];
+//    }
 
 //    // Call functions to get the input values to be recorded
 //    recorded_variable_values[GSYN_EXCITATORY_RECORDING_INDEX] = total_exc;
@@ -275,9 +275,6 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
 //    		global_parameters->core_pop_rate;
 
     // Call functions to convert exc_input and inh_input to current
-    // QUESTION these inputs are membrane voltage from i neuron ?
-    // just need 1 for incoming spike else 0 multiplied by weight for that synapse
-    // need new input_type ?
     input_type_convert_excitatory_input_to_current(
             exc_input_values, input_type, voltage);
     input_type_convert_inhibitory_input_to_current(
@@ -291,14 +288,13 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
 
 
     // Record B
-    // location before/after state update will determine tick that is recorded
     recorded_variable_values[GSYN_INHIBITORY_RECORDING_INDEX] =
 //    		B_t; // neuron->B;
 //    		global_parameters->core_target_rate;
 //    	neuron->syn_state[0].e_bar;
 //    	neuron->syn_state[0].el_a;
-//    		total_inh;
-    		learning_signal * neuron->w_fb;
+    		exc_input_values[1]; // record recurrent input (signed)
+//    		learning_signal * neuron->w_fb;
 
     // update neuron parameters
     state_t result = neuron_model_state_update(
@@ -328,8 +324,8 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
 
     recorded_variable_values[GSYN_EXCITATORY_RECORDING_INDEX] =
 //    		neuron->syn_state[0].delta_w;
-    		neuron->syn_state[0].z_bar;
-//    		total_exc;
+//    		neuron->syn_state[0].z_bar;
+    		exc_input_values[0]; // record input input (signed)
 //    		z_t;
 //    		global_parameters->core_pop_rate;
 //    		neuron->psi;

@@ -64,20 +64,20 @@ state_t neuron_model_state_update(
 	log_debug("Exc 1: %12.6k, Exc 2: %12.6k", exc_input[0], exc_input[1]);
 	log_debug("Inh 1: %12.6k, Inh 2: %12.6k", inh_input[0], inh_input[1]);
 
-	REAL total_exc = 0;
-	REAL total_inh = 0;
-
-	for (int i=0; i < num_excitatory_inputs; i++) {
-		total_exc += exc_input[i];
-	}
-	for (int i=0; i< num_inhibitory_inputs; i++) {
-		total_inh += inh_input[i];
-	}
+//	REAL total_exc = 0;
+//	REAL total_inh = 0;
+//
+//	for (int i=0; i < num_excitatory_inputs; i++) {
+//		total_exc += exc_input[i];
+//	}
+//	for (int i=0; i< num_inhibitory_inputs; i++) {
+//		total_inh += inh_input[i];
+//	}
     // Get the input in nA
     // exc_input[0] + exc_input[1] + ... QUESTION
     // care with timesteps. exc_input[1] (recurrent) at t and exc_input[0] (input x) at t+1
     input_t input_this_timestep =
-    		exc_input[0] - inh_input[0] + external_bias + neuron->I_offset;
+    		exc_input[0] + exc_input[1] + neuron->I_offset;
 
         lif_neuron_closed_form(
                 neuron, neuron->V_membrane, input_this_timestep, B_t);

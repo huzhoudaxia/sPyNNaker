@@ -284,16 +284,17 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
             additional_input, voltage);
 
     // determine if a spike should occur
+    // this is where B is updated
     threshold_type_update_threshold(neuron->z, neuron);
 
 
     // Record B
     recorded_variable_values[GSYN_INHIBITORY_RECORDING_INDEX] =
-//    		B_t; // neuron->B;
+    		B_t; // neuron->B;
 //    		global_parameters->core_target_rate;
 //    	neuron->syn_state[0].e_bar;
 //    	neuron->syn_state[0].el_a;
-    		exc_input_values[1]; // record recurrent input (signed)
+//    		exc_input_values[1]; // record recurrent input (signed) z weights
 //    		learning_signal * neuron->w_fb;
 
     // update neuron parameters
@@ -306,7 +307,8 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
 
 
     // Also update Z (including using refractory period information)
-    state_t nu = (voltage - neuron->B)/neuron->B;
+    // I think this is the heaviside implementation. New version has no denominator
+    state_t nu = (voltage - neuron->B);
 
     if (nu > ZERO){
     	neuron->z = 1.0k * neuron->A; // implements refractory period
@@ -325,11 +327,11 @@ static bool neuron_impl_do_timestep_update(index_t neuron_index,
     recorded_variable_values[GSYN_EXCITATORY_RECORDING_INDEX] =
 //    		neuron->syn_state[0].delta_w;
 //    		neuron->syn_state[0].z_bar;
-    		exc_input_values[0]; // record input input (signed)
+//    		exc_input_values[0]; // record input input (signed) x weights
 //    		z_t;
 //    		global_parameters->core_pop_rate;
 //    		neuron->psi;
-//    		neuron->syn_state[0].z_bar;
+    		neuron->syn_state[0].z_bar;
 
 //    // Record B
 //    recorded_variable_values[GSYN_INHIBITORY_RECORDING_INDEX] =

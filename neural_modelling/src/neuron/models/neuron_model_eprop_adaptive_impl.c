@@ -28,8 +28,6 @@ static inline void lif_neuron_closed_form(
 		REAL B_t) {
 
     REAL alpha = input_this_timestep * neuron->R_membrane + neuron->V_rest;
-    // input_this_timestep is a current
-    // however in Bellec et al it is a binary times weight
 
     // update membrane voltage
     neuron->V_membrane = alpha - (neuron->exp_TC * (alpha - V_prev))
@@ -37,12 +35,13 @@ static inline void lif_neuron_closed_form(
 } // neuron, neuron->V_membrane, input_this_timestep, B_t
 
 static inline void lif_model_voltage_update(
-        neuron_pointer_t neuron, REAL V_prev, input_t input_this_timestep,
-        REAL B_t) {
+        neuron_pointer_t neuron, REAL V_prev, input_t input_this_timestep) {
 
-    REAL alpha_decay = 0.9512294245 // exp(1/20ms)
-    // input_this_timestep = exc_input[0] - inh_input[0] + external_bias + neuron->I_offset
-    neuron->V_membrane = alpha_decay * V_prev + input_this_timestep
+    // input_this_timestep = exc_input[0] + exc_input[1] + neuron->I_offset
+    // == W_ji^rec * z_i + W_ji^in * x_i + I_offset
+    neuron->V_membrane = neuron->exp_TC * V_prev + input_this_timestep
+        - neuron->z * neuron->b_0;
+    // heaviside(binary spike) * neuron<-v_th
 
 }
 
@@ -52,7 +51,7 @@ void neuron_model_set_global_neuron_params(
 
     local_eta = params->eta;
     io_printf(IO_BUF, "local eta = %k", local_eta);
-    // Does Nothing - no params
+    // Does Nothing
 }
 
 state_t neuron_model_state_update(
@@ -74,13 +73,13 @@ state_t neuron_model_state_update(
 //		total_inh += inh_input[i];
 //	}
     // Get the input in nA
-    // exc_input[0] + exc_input[1] + ... QUESTION
     // care with timesteps. exc_input[1] (recurrent) at t and exc_input[0] (input x) at t+1
     input_t input_this_timestep =
     		exc_input[0] + exc_input[1] + neuron->I_offset;
 
-        lif_neuron_closed_form(
-                neuron, neuron->V_membrane, input_this_timestep, B_t);
+    lif_model_voltage_update(neuron, neuron->V_membrane, input_this_timestep);
+        //lif_neuron_closed_form(
+        //        neuron, neuron->V_membrane, input_this_timestep, B_t);
 
     // If outside of the refractory period
     if (neuron->refract_timer <= 0) {

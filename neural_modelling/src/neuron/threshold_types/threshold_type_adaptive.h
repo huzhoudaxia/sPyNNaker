@@ -48,18 +48,22 @@ static inline bool threshold_type_is_above_threshold(state_t value,
     return false;
 }
 
+// Why is this duplicated from neuron_model_eprop_adaptive_impl.h and does it need
+// to be here?
 static inline void threshold_type_update_threshold(state_t z,
-		threshold_type_pointer_t threshold_type){
+		neuron_pointer_t threshold_type){
 
 //	_print_threshold_params(threshold_type);
+// threshold_type is a neuron here
 
 
 	s1615 temp1 = decay_s1615(threshold_type->b, threshold_type->e_to_dt_on_tau_a);
-	s1615 temp2 = decay_s1615(threshold_type->scalar, threshold_type->adpt) * z;
+	//s1615 temp2 = decay_s1615(threshold_type->scalar, threshold_type->adpt) * z;
 
 	threshold_type->b = temp1
-			+ temp2;
-
+	        + z;
+	//		+ temp2;
+	// io_printf(IO_BUF, "temp1: %k; temp2: %k\n", temp1, temp2);
 
 //	// Evolve threshold dynamics (decay to baseline) and adapt if z=nonzero
 //	// Update small b (same regardless of spike - uses z from previous timestep)
